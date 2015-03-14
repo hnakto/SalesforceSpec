@@ -1,0 +1,31 @@
+{
+  "name": "SalesforceSpec",
+  "version": "0.0.1",
+  "description": "Extract Salesforce org definition to Excel file",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hagasatoshi/SalesforceSpec.git"
+  },
+  "author": "Satoshi Haga (satoshi.haga.github@gmail.com)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hagasatoshi/SalesforceSpec/issues"
+  },
+  "homepage": "https://github.com/hagasatoshi/SalesforceSpec",
+  "dependencies": {
+    "adm-zip": "^0.4.7",
+    "bluebird": "^2.9.13",
+    "dotenv": "^1.0.0",
+    "fs": "0.0.2",
+    "fs-walk": "0.0.1",
+    "jsforce": "^1.4.0",
+    "tmp": "0.0.24",
+    "underscore": "^1.8.2",
+    "walk": "^2.3.9",
+    "xml2js": "^0.4.5"
+  }
+}
