@@ -31,8 +31,7 @@ var sf_rules = [];     //入力規則
 
 spec.initialize()
 .then(function(result){
-    //console.log('seqence4');
-    //console.log(result);
+    console.log(spec.metadata.validation_rules);
 }).catch(function(err){
     console.log(err);
 });
