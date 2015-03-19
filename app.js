@@ -29,6 +29,14 @@ var util = new Utility();
 var sf_objs = [];   //カスタムオブジェクト
 var sf_rules = [];     //入力規則
 
+spec.initialize()
+.then(function(result){
+    //console.log('seqence4');
+    //console.log(result);
+}).catch(function(err){
+    console.log(err);
+});
+/**
 Promise
 .all([
     extract_salesforce_metadata()
@@ -74,6 +82,7 @@ Promise
 }).catch(function(err){
     console.log(err);
 })
+*/
 
 /**
  * * extract_salesforce_metadata
