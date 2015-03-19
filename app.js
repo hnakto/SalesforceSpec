@@ -29,11 +29,30 @@ var util = new Utility();
 var sf_objs = [];   //カスタムオブジェクト
 var sf_rules = [];     //入力規則
 
-spec.initialize()
-.then(function(result){
-    console.log(spec.metadata.validation_rules);
-}).catch(function(err){
-    console.log(err);
+Promise.all([
+    spec.initialize(),
+    spread.initialize()
+]).then(function(){
+    spread.bulk_copy_sheet(
+        'field',
+        spec.metadata.custom_objs
+    ).then(function(){
+        return Promise.resolve(spread.generate());
+    }).then(
+        function(zip) {
+            fs.writeFile(
+                "./work/Specification.xlsx",
+                zip,
+                function(error) {
+                    console.log(error);
+                }
+            );
+        }
+    ).then(function(error2){
+        console.log(error2);
+    })
+}).catch(function(error3){
+    console.log(error3);
 });
 /**
 Promise
