@@ -32,28 +32,60 @@ var sf_rules = [];     //入力規則
 Promise.all([
     spec.initialize(),
     spread.initialize()
-]).then(function(){
-    spread.bulk_copy_sheet(
-        'field',
-        spec.metadata.custom_objs
-    ).then(function(){
-        return Promise.resolve(spread.generate());
-    }).then(
-        function(zip) {
-            fs.writeFile(
-                "./work/Specification.xlsx",
-                zip,
-                function(error) {
-                    console.log(error);
-                }
-            );
+]).then(function() {
+    return spread.bulk_copy_sheet('field',spec.metadata.custom_objs);
+}).then(function() {
+    return set_fields('AuthorRate__c',spec.metadata.fields);
+}).then(function(){
+    return Promise.resolve(spread.generate());
+}).then(function(zip) {
+    fs.writeFile(
+        "./work/Specification.xlsx",
+        zip,
+        function(error) {
+            if(error){
+                console.log(error);
+            }
+            console.log('Successfully finished')
         }
-    ).then(function(error2){
-        console.log(error2);
-    })
-}).catch(function(error3){
-    console.log(error3);
+    );
+}).then(function(result){
+    console.log(result);
+}).catch(function(err){
+    console.log(err);
 });
+
+
+function set_fields(
+    sheetname, 
+    fields
+){
+    return new Promise(function(resolve, reject){
+        var row_number = 7;
+        fields[sheetname].reduce(
+            function(promise, field) {
+                return promise.then(function(value) {
+                    return spread.add_row(
+                        sheetname,
+                        row_number++,
+                        ['',(row_number-7),field.label,'',field.apiname,'',field.type,'',field.formula ? field.formula : field.picklistValues,
+                            '','',field.description,'','','',field.required,field.unique,field.externalId]
+                    );
+                });
+            },
+            Promise.resolve()
+        ).then(
+            function() {
+                resolve();
+            }
+        ).catch(
+            function(err){
+                console.log(err);
+                reject(err);
+            }
+        );
+    });
+}
 /**
 Promise
 .all([
