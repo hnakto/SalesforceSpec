@@ -35,7 +35,8 @@ Promise.all([
 ]).then(function() {
     return spread.bulk_copy_sheet('field',spec.metadata.custom_objs);
 }).then(function() {
-    return set_fields('AuthorRate__c',spec.metadata.fields);
+    bulk_set_fields(spec.metadata.custom_objs, spec.metadata.fields);
+    return Promise.resolve();
 }).then(function(){
     return Promise.resolve(spread.generate());
 }).then(function(zip) {
@@ -56,36 +57,42 @@ Promise.all([
 });
 
 
+/**
+ * * set_fields
+ * * 1シートに値をセットする
+ * @param sheetname
+ * @param fields
+ */
 function set_fields(
     sheetname, 
     fields
 ){
-    return new Promise(function(resolve, reject){
-        var row_number = 7;
-        fields[sheetname].reduce(
-            function(promise, field) {
-                return promise.then(function(value) {
-                    return spread.add_row(
-                        sheetname,
-                        row_number++,
-                        ['',(row_number-7),field.label,'',field.apiname,'',field.type,'',field.formula ? field.formula : field.picklistValues,
-                            '','',field.description,'','','',field.required,field.unique,field.externalId]
-                    );
-                });
-            },
-            Promise.resolve()
-        ).then(
-            function() {
-                resolve();
-            }
-        ).catch(
-            function(err){
-                console.log(err);
-                reject(err);
-            }
+    var row_number = 7;
+    _.each(fields, function(field){
+        spread.add_row(
+            sheetname,
+            row_number++,
+            ['',(row_number-7),field.label,'',field.apiname,'',field.type,'',field.formula ? field.formula : field.picklistValues,
+                '','',field.description,'','','',field.required,field.unique,field.externalId]
         );
-    });
+    })
 }
+
+/**
+ * * bulk_set_fields
+ * * 複数のシートに値をセットする
+ * @param sheetnames
+ * @param object_fields
+ */
+function bulk_set_fields(
+    sheetnames,
+    object_fields
+) {
+    _.each(sheetnames, function(object_name){
+        set_fields(object_name, object_fields[object_name]);
+    })
+}
+
 /**
 Promise
 .all([
