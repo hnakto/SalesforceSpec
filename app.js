@@ -33,25 +33,23 @@ Promise.all([
     spec.initialize(),
     spread.initialize()
 ]).then(function() {
-    return spread.bulk_copy_sheet('field',spec.metadata.custom_objs);
-}).then(function() {
-    bulk_set_fields(spec.metadata.custom_objs, spec.metadata.fields);
-    return Promise.resolve();
-}).then(function(){
-    return Promise.resolve(spread.generate());
-}).then(function(zip) {
-    fs.writeFile(
-        "./work/Specification.xlsx",
-        zip,
-        function(error) {
-            if(error){
-                console.log(error);
+    spread.bulk_copy_sheet('field',spec.metadata.custom_objs);
+    set_fields('Opportunity__c', spec.metadata.fields['Opportunity__c']);
+    var zip = spread.generate();
+    return new Promise(function(resolve, reject){
+        fs.writeFile(
+            "./work/Specification.xlsx",
+            zip,
+            function(error) {
+                if(error){
+                    reject(error);
+                }
+                resolve();
             }
-            console.log('Successfully finished')
-        }
-    );
-}).then(function(result){
-    console.log(result);
+        );
+    });
+}).then(function(){
+    console.log('Successfully ended');
 }).catch(function(err){
     console.log(err);
 });
@@ -92,86 +90,3 @@ function bulk_set_fields(
         set_fields(object_name, object_fields[object_name]);
     })
 }
-
-/**
-Promise
-.all([
-    extract_salesforce_metadata()
-    ,spread.initialize()
-]).then(function(results){
-    var index = 7;
-    sf_rules.reduce(
-        function(promise, rule) {
-            return promise.then(function(value) {
-                var cell_value = [
-                    '',index-6,(rule.active === 'true'? '●' : ''),rule.obj_name,'',
-                    rule.fullName,'',rule.errorMessage,'','','',rule.errorConditionFormula
-                ];
-                
-                var spread_promise = spread.add_row(
-                                    'Validation',
-                                    index,
-                                    cell_value
-                                );
-                index++;
-                return spread_promise;
-            });
-        },
-        Promise.resolve()
-    ).then(
-        function(zip) {
-            fs.writeFile(
-                "./work/compress100.xlsx",
-                zip,
-                function(err) {
-                    if (err){
-                        console.log(err);
-                    }
-                }
-            );
-        }
-    ).catch(
-        function(err){
-            console.log(err);
-        }
-    );
-        
-}).catch(function(err){
-    console.log(err);
-})
-*/
-
-/**
- * * extract_salesforce_metadata
- * * Salesforceのメタデータを抽出する
- * @returns {Promise}
- */
-function extract_salesforce_metadata(){
-    return new Promise(function(resolve, reject){
-        spec.initialize()
-        .then(function(){
-            spec.retrieve_package()
-            .then(function(){
-                spec.get_validation_rules()
-                .then(function(rules){
-                    sf_objs = Object.keys(rules);
-                    _.each(Object.keys(rules), function(obj){
-                        _.each(rules[obj], function(each_rule){
-                            each_rule.obj_name = obj;
-                            sf_rules.push(each_rule);
-                        })
-                    });
-                    resolve();
-                }).catch(function(err){
-                    reject(err);
-                });
-            }).catch(function(err){
-                reject(err);
-            });
-        }).catch(function(err){
-            reject(err);
-        })
-    });
-}
-
-
