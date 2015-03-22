@@ -21,24 +21,28 @@ var Promise = require('bluebird');
 var SalesforceSpec = require('./lib/SalesforceSpec');
 var spec = new SalesforceSpec();
 var SpreadSheet = require('./lib/SpreadSheet');
-var spread = new SpreadSheet('./template/SpecTemplate.xlsx');
 var Utility = require('./lib/Util');
 var util = new Utility();
 
-//Salesforce
-var sf_objs = [];   //カスタムオブジェクト
-var sf_rules = [];     //入力規則
+var spread_custom_field = new SpreadSheet('./template/CustomField.xlsx');
+var spread_validation_rule = new SpreadSheet('./template/Validation.xlsx');
 
 Promise.all([
     spec.initialize(),
-    spread.initialize()
+    spread_custom_field.initialize(),
+    spread_validation_rule.initialize()
 ]).then(function() {
-    spread.bulk_copy_sheet('field',spec.metadata.custom_objs);
+    //カスタム項目一覧
+    spread_custom_field.bulk_copy_sheet('field',spec.metadata.custom_objs);
     set_fields('Opportunity__c', spec.metadata.fields['Opportunity__c']);
-    var zip = spread.generate();
+    //入力規則
+    set_validation_rules('Validation', spec.metadata.validation_rules);
+
+    //項目定義書を出力
+    var zip = spread_custom_field.generate();
     return new Promise(function(resolve, reject){
         fs.writeFile(
-            "./work/Specification.xlsx",
+            "./work/項目定義一覧.xlsx",
             zip,
             function(error) {
                 if(error){
@@ -49,15 +53,55 @@ Promise.all([
         );
     });
 }).then(function(){
-    console.log('Successfully ended');
+    console.log('項目定義一覧 is created successfully');
+    var zip = spread_validation_rule.generate();
+    return new Promise(function(resolve, reject){
+        fs.writeFile(
+            "./work/入力規則一覧.xlsx",
+            zip,
+            function(error) {
+                if(error){
+                    reject(error);
+                }
+                resolve();
+            }
+        );
+    });
+}).then(function(){
+    console.log('入力規則一覧 is created successfully');
 }).catch(function(err){
     console.log(err);
 });
 
 
+/***
+ * * set_validation_rules
+ * * (入力規則)
+ * @param sheetname
+ * @param rules
+ */
+function set_validation_rules(
+    sheetname,
+    rules
+){
+    var row_number = 7;
+    _.each(Object.keys(rules), function(objectname){
+        var rules_in_object = rules[objectname];
+        _.each(rules_in_object, function(rule){
+            spread_validation_rule.add_row(
+                sheetname,
+                row_number++,
+                ['',(row_number-7),rule.active,objectname,'',rule.fullName,'',rule.errorMessage,
+                    '','','',rule.errorConditionFormula]
+            );
+        });
+    })
+
+    
+}    
 /**
  * * set_fields
- * * 1シートに値をセットする
+ * * (項目定義書)1シートに値をセットする
  * @param sheetname
  * @param fields
  */
@@ -67,7 +111,7 @@ function set_fields(
 ){
     var row_number = 7;
     _.each(fields, function(field){
-        spread.add_row(
+        spread_custom_field.add_row(
             sheetname,
             row_number++,
             ['',(row_number-7),field.label,'',field.apiname,'',field.type,'',field.formula ? field.formula : field.picklistValues,
