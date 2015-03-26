@@ -29,22 +29,22 @@ var fileHelper = new FileHelper();
 var Log = require('log')
 var log = new Log(Log.DEBUG);
 
-
 var spread_custom_field = new SpreadSheet('./template/CustomField.xlsx');
 var spread_validation_rule = new SpreadSheet('./template/Validation.xlsx');
 var spread_crud = new SpreadSheet('./template/CRUD.xlsx');
+var spread_field_permission = new SpreadSheet('./template/FieldPermission.xlsx');
 
 Promise.all([
     spec.initialize(),
     spread_custom_field.initialize(),
     spread_validation_rule.initialize(),
-    spread_crud.initialize()
+    spread_crud.initialize(),
+    spread_field_permission.initialize()
 ]).then(function() {
-    
     set_fields('Opportunity__c', spec.metadata.fields['Opportunity__c']);
     set_validation_rules();
     set_profile_crud();
-
+    set_all_field_permissions();
     return Promise.resolve();
 }).then(function(){
     return fileHelper.writeFile(
@@ -60,6 +60,11 @@ Promise.all([
     return fileHelper.writeFile(
         "./work/プロファイル権限一覧.xlsx",
         spread_crud.generate()
+    );
+}).then(function(){
+    return fileHelper.writeFile(
+        "./work/項目レベル権限一覧.xlsx",
+        spread_field_permission.generate()
     );
 }).then(function(){
     log.info('successfully finished.');
@@ -128,8 +133,6 @@ function set_validation_rules(){
             );
         });
     })
-
-    
 }    
 /**
  * * set_fields
@@ -151,6 +154,62 @@ function set_fields(
                 '','',field.description,'','','',field.required,field.unique,field.externalId]
         );
     })
+}
+
+/**
+ * * set_all_field_permissions
+ * * すべてのシートに、Field Permissionを保存する
+ */
+function set_all_field_permissions(){
+    spread_field_permission.bulk_copy_sheet('CRUD',spec.metadata.custom_objs);
+    _.each(spec.metadata.custom_objs, function(obj){
+        set_field_permissions(
+            obj,
+            spec.metadata.valid_profiles,
+            spec.metadata.field_permission,
+            spec.metadata.fields[obj]
+        );
+    });
+}
+
+/**
+ * * set_field_permissions
+ * * 引数のシートに、Field Permissionを保存する
+ * @param sheetname
+ * @param profiles
+ * @param field_permissions
+ * @param fields
+ */
+function set_field_permissions(
+    sheetname,
+    profiles,
+    field_permissions,      //Profile名 × fieldのAPI名(--__c.--__c) → {readable: ''or'●', readonly: ''or'●'}
+    fields
+){
+    var row_number = 8;
+    var permission_matrix = [];
+    _.each(fields, function(field){
+        var field_row = ['',field.label,'',field.apiname,''];
+        permission_matrix.push(field_row);
+    });
+    _.each(profiles, function(profile) {
+        var permissions = field_permissions[profile];
+        for (var i = 0; i < permission_matrix.length; i++) {
+            var permission_row = permission_matrix[i];
+            var field_full_name = sheetname + '.' + permission_row[3];
+            if(permissions[field_full_name] !== undefined) {
+                permission_row.push(permissions[field_full_name].readable);
+                permission_row.push(permissions[field_full_name].readonly);
+            }
+        }
+    });
+    _.each(permission_matrix, function(permission_row) {
+        spread_field_permission.add_row(
+            sheetname,
+            row_number++,
+            permission_row
+        );
+    });
 }
 
 /**
