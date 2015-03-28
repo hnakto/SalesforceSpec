@@ -55,7 +55,7 @@ Promise.all([
     return Promise.resolve();
 }).then(function(){
     return fileHelper.writeFile(
-        "./work/項目定義書.xlsx",
+        "./work/項目一覧.xlsx",
         spread_custom_field.generate()
     );
 }).then(function(){
@@ -65,12 +65,12 @@ Promise.all([
     );
 }).then(function(){
     return fileHelper.writeFile(
-        "./work/プロファイル権限一覧.xlsx",
+        "./work/オブジェクト権限一覧.xlsx",
         spread_crud.generate()
     );
 }).then(function(){
     return fileHelper.writeFile(
-        "./work/項目レベル権限一覧.xlsx",
+        "./work/項目権限一覧.xlsx",
         spread_field_permission.generate()
     );
 }).then(function(){
@@ -183,8 +183,8 @@ function set_fields(
         spread_custom_field.add_row(
             sheetname,
             row_number++,
-            ['',(row_number-7),field.label,'',field.apiname,'',field.type,'',field.formula ? field.formula : field.picklistValues,
-                '','',field.description,'','','',field.required,field.unique,field.externalId]
+            ['',(row_number-7),field.label,'','','',field.apiname,'','','',field.type,'',field.formula ? field.formula : field.picklistValues,
+                '','','',field.defaultValue,'','',field.required,field.unique,field.externalId,field.trackHistory,field.trackTrending,field.description]
         );
     })
 }
