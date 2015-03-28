@@ -44,7 +44,10 @@ Promise.all([
     set_fields('Opportunity__c', spec.metadata.fields['Opportunity__c']);
     set_validation_rules();
     set_profile_crud();
+
+    spread_field_permission.bulk_copy_sheet('CRUD',spec.metadata.custom_objs);
     set_all_field_permissions();
+
     return Promise.resolve();
 }).then(function(){
     return fileHelper.writeFile(
@@ -83,6 +86,9 @@ function set_profile_crud(){
         6,
         ['','オブジェクト','','','CRUD'].concat(spec.metadata.valid_profiles)
     );
+    var index_on_mark = spread_crud.shared_strings.add_string('●');
+    var mark = {'●':index_on_mark};
+    
     var profile_crud = spec.metadata.profile_crud;
     for(var i = 0; i<spec.metadata.custom_objs.length; i++){
         var obj_apiname = spec.metadata.custom_objs[i];
@@ -105,16 +111,14 @@ function set_profile_crud(){
             permission_all_r.push(permission? permission.viewAllRecords : '');
             permission_all_u.push(permission? permission.modifyAllRecords : '');
         }
-        spread_crud.add_row('CRUD',i*6+7,permission_c);
-        spread_crud.add_row('CRUD',i*6+8,permission_r);
-        spread_crud.add_row('CRUD',i*6+9,permission_u);
-        spread_crud.add_row('CRUD',i*6+10,permission_d);
-        spread_crud.add_row('CRUD',i*6+11,permission_all_r);
-        spread_crud.add_row('CRUD',i*6+12,permission_all_u);
+        spread_crud.add_row('CRUD',i*6+7,permission_c,mark);
+        spread_crud.add_row('CRUD',i*6+8,permission_r,mark);
+        spread_crud.add_row('CRUD',i*6+9,permission_u,mark);
+        spread_crud.add_row('CRUD',i*6+10,permission_d,mark);
+        spread_crud.add_row('CRUD',i*6+11,permission_all_r,mark);
+        spread_crud.add_row('CRUD',i*6+12,permission_all_u,mark);
     }
 }
-
-
 
 /***
  * * set_validation_rules
@@ -133,7 +137,8 @@ function set_validation_rules(){
             );
         });
     })
-}    
+}   
+
 /**
  * * set_fields
  * * (項目定義書)1シートに値をセットする
@@ -161,13 +166,14 @@ function set_fields(
  * * すべてのシートに、Field Permissionを保存する
  */
 function set_all_field_permissions(){
-    spread_field_permission.bulk_copy_sheet('CRUD',spec.metadata.custom_objs);
+    var index_on_mark = spread_field_permission.shared_strings.add_string('●');
     _.each(spec.metadata.custom_objs, function(obj){
         set_field_permissions(
             obj,
             spec.metadata.valid_profiles,
             spec.metadata.field_permission,
-            spec.metadata.fields[obj]
+            spec.metadata.fields[obj],
+            index_on_mark
         );
     });
 }
@@ -184,9 +190,11 @@ function set_field_permissions(
     sheetname,
     profiles,
     field_permissions,      //Profile名 × fieldのAPI名(--__c.--__c) → {readable: ''or'●', readonly: ''or'●'}
-    fields
+    fields,
+    index_on_mark
 ){
     var row_number = 8;
+    var header_row = ['','オブジェクト','','',''];
     var permission_matrix = [];
     _.each(fields, function(field){
         var field_row = ['',field.label,'',field.apiname,''];
@@ -194,20 +202,31 @@ function set_field_permissions(
     });
     _.each(profiles, function(profile) {
         var permissions = field_permissions[profile];
+        header_row.push(profile);
+        header_row.push('');
         for (var i = 0; i < permission_matrix.length; i++) {
             var permission_row = permission_matrix[i];
             var field_full_name = sheetname + '.' + permission_row[3];
             if(permissions[field_full_name] !== undefined) {
-                permission_row.push(permissions[field_full_name].readable);
-                permission_row.push(permissions[field_full_name].readonly);
+                if(permissions[field_full_name].readable !== undefined)
+                    permission_row.push(permissions[field_full_name].readable);
+                if(permissions[field_full_name].readonly !== undefined)
+                    permission_row.push(permissions[field_full_name].readonly);
             }
         }
     });
+
+    spread_field_permission.add_row(
+        sheetname,
+        6,
+        header_row
+    );
     _.each(permission_matrix, function(permission_row) {
         spread_field_permission.add_row(
             sheetname,
             row_number++,
-            permission_row
+            permission_row,
+            {'●': index_on_mark}
         );
     });
 }
