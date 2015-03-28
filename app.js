@@ -33,13 +33,15 @@ var spread_custom_field = new SpreadSheet('./template/CustomField.xlsx');
 var spread_validation_rule = new SpreadSheet('./template/Validation.xlsx');
 var spread_crud = new SpreadSheet('./template/CRUD.xlsx');
 var spread_field_permission = new SpreadSheet('./template/FieldPermission.xlsx');
+var spread_workflow = new SpreadSheet('./template/WorkFlow.xlsx');
 
 Promise.all([
     spec.initialize(),
     spread_custom_field.initialize(),
     spread_validation_rule.initialize(),
     spread_crud.initialize(),
-    spread_field_permission.initialize()
+    spread_field_permission.initialize(),
+    spread_workflow.initialize()
 ]).then(function() {
     set_fields('Opportunity__c', spec.metadata.fields['Opportunity__c']);
     set_validation_rules();
@@ -47,6 +49,8 @@ Promise.all([
 
     spread_field_permission.bulk_copy_sheet('CRUD',spec.metadata.custom_objs);
     set_all_field_permissions();
+
+    set_workflow();
 
     return Promise.resolve();
 }).then(function(){
@@ -68,6 +72,11 @@ Promise.all([
     return fileHelper.writeFile(
         "./work/項目レベル権限一覧.xlsx",
         spread_field_permission.generate()
+    );
+}).then(function(){
+    return fileHelper.writeFile(
+        "./work/ワークフロー一覧.xlsx",
+        spread_workflow.generate()
     );
 }).then(function(){
     log.info('successfully finished.');
@@ -120,6 +129,25 @@ function set_profile_crud(){
     }
 }
 
+/**
+ * * set_workflow
+ * * ワークフロー一覧
+ */
+function set_workflow(){
+    var row_number = 10;
+    _.each(Object.keys(spec.metadata.work_flows), function(objectname){
+        var workflow_in_object = spec.metadata.work_flows[objectname];
+        _.each(workflow_in_object, function(action){
+            spread_workflow.add_row(
+                'WorkFlow',
+                row_number++,
+                ['',(row_number-10),action.workflow_active,objectname,'','',action.workflow_fullName,'','','',action.workflow_trigger_code,
+                    '','','',action.workflow_description,'','','','','','',action.type,'',action.fullName,'','',action.name_or_description,
+                    '','','','',action.field_or_recipients,action.update_value_or_template]
+            );
+        });
+    })
+}
 /***
  * * set_validation_rules
  * * (入力規則)
