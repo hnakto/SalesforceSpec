@@ -93,7 +93,7 @@ function set_profile_crud(){
     spread_crud.add_row(
         'CRUD',
         6,
-        ['','オブジェクト','','','CRUD'].concat(spec.metadata.valid_profiles)
+        ['','オブジェクト','','','','','','CRUD'].concat(spec.metadata.valid_profiles)
     );
     var index_on_mark = spread_crud.shared_strings.add_string('●');
     var mark = {'●':index_on_mark};
@@ -103,12 +103,12 @@ function set_profile_crud(){
         var obj_apiname = spec.metadata.custom_objs[i];
         var objname = spec.get_labelname(obj_apiname);
 
-        var permission_c = ['',objname,'','','作成'];
-        var permission_r = ['',objname,'','','読み取り'];
-        var permission_u = ['',objname,'','','更新'];
-        var permission_d = ['',objname,'','','削除'];
-        var permission_all_r = ['',objname,'','','すべて参照'];
-        var permission_all_u = ['',objname,'','','すべて更新'];
+        var permission_c = ['',objname,'','',obj_apiname,'','','作成'];
+        var permission_r = ['',objname,'','',obj_apiname,'','','読み取り'];
+        var permission_u = ['',objname,'','',obj_apiname,'','','更新'];
+        var permission_d = ['',objname,'','',obj_apiname,'','','削除'];
+        var permission_all_r = ['',objname,'','',obj_apiname,'','','すべて参照'];
+        var permission_all_u = ['',objname,'','',obj_apiname,'','','すべて更新'];
 
         for(var j = 0; j<spec.metadata.valid_profiles.length; j++){
             var profile_name = spec.metadata.valid_profiles[j];
