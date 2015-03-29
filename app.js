@@ -147,8 +147,8 @@ function set_workflow(){
                 'WorkFlow',
                 row_number++,
                 ['',(row_number-10),action.workflow_active,objectname,'','',action.workflow_fullName,'','','',action.workflow_trigger_code,
-                    '','','',action.workflow_description,'','','','','','',action.type,'',action.fullName,'','',action.name_or_description,
-                    '','','','',action.field_or_recipients,action.update_value_or_template]
+                    action.workflow_criteria,'','',action.workflow_description,'','','','','','',action.type,'',action.fullName,'','',action.name_or_description,
+                    '','','','',action.field_or_recipients,'',action.update_value_or_template]
             );
         });
     })
