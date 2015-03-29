@@ -35,6 +35,10 @@ var spread_crud = new SpreadSheet('./template/ObjectPermission.xlsx');
 var spread_field_permission = new SpreadSheet('./template/FieldPermission.xlsx');
 var spread_workflow = new SpreadSheet('./template/WorkFlow.xlsx');
 
+var target_obj = [
+    //ここにターゲットを記述
+];
+
 Promise.all([
     spec.initialize(),
     spread_custom_field.initialize(),
@@ -43,11 +47,12 @@ Promise.all([
     spread_field_permission.initialize(),
     spread_workflow.initialize()
 ]).then(function() {
-    set_fields('Opportunity__c', spec.metadata.fields['Opportunity__c']);
+    spread_custom_field.bulk_copy_sheet('field',target_obj);
+    bulk_set_fields(target_obj, spec.metadata.fields);
     set_validation_rules();
     set_profile_crud();
-
-    spread_field_permission.bulk_copy_sheet('CRUD',spec.metadata.custom_objs);
+    
+    spread_field_permission.bulk_copy_sheet('CRUD', spec.metadata.custom_objs);
     set_all_field_permissions();
 
     set_workflow();
@@ -178,7 +183,6 @@ function set_fields(
     fields
 ){
     var row_number = 7;
-    spread_custom_field.bulk_copy_sheet('field',spec.metadata.custom_objs);
     _.each(fields, function(field){
         spread_custom_field.add_row(
             sheetname,
