@@ -55,7 +55,7 @@ Promise.all([
     return Promise.resolve();
 }).then(function(){
     return fileHelper.writeFile(
-        "./work/項目一覧.xlsx",
+        "./work/カスタム項目一覧.xlsx",
         spread_custom_field.generate()
     );
 }).then(function(){
@@ -70,7 +70,7 @@ Promise.all([
     );
 }).then(function(){
     return fileHelper.writeFile(
-        "./work/項目権限一覧.xlsx",
+        "./work/項目レベル権限一覧.xlsx",
         spread_field_permission.generate()
     );
 }).then(function(){
