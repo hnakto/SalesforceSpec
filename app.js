@@ -31,7 +31,7 @@ var log = new Log(Log.DEBUG);
 
 var spread_custom_field = new SpreadSheet('./template/CustomField.xlsx');
 var spread_validation_rule = new SpreadSheet('./template/Validation.xlsx');
-var spread_crud = new SpreadSheet('./template/CRUD.xlsx');
+var spread_crud = new SpreadSheet('./template/ObjectPermission.xlsx');
 var spread_field_permission = new SpreadSheet('./template/FieldPermission.xlsx');
 var spread_workflow = new SpreadSheet('./template/WorkFlow.xlsx');
 
