@@ -221,39 +221,51 @@ function set_field_permissions(
     fields,
     index_on_mark
 ){
-    var row_number = 8;
-    var header_row = ['','オブジェクト','','',''];
-    var permission_matrix = [];
-    _.each(fields, function(field){
-        var field_row = ['',field.label,'',field.apiname,''];
-        permission_matrix.push(field_row);
-    });
+    var row_number = 7;
+    var header_row = ['','オブジェクト','','','','','','CRUD'];
     _.each(profiles, function(profile) {
-        var permissions = field_permissions[profile];
         header_row.push(profile);
-        header_row.push('');
-        for (var i = 0; i < permission_matrix.length; i++) {
-            var permission_row = permission_matrix[i];
-            var field_full_name = sheetname + '.' + permission_row[3];
-            if(permissions[field_full_name] !== undefined) {
-                if(permissions[field_full_name].readable !== undefined)
-                    permission_row.push(permissions[field_full_name].readable);
-                if(permissions[field_full_name].readonly !== undefined)
-                    permission_row.push(permissions[field_full_name].readonly);
-            }
-        }
     });
-
     spread_field_permission.add_row(
         sheetname,
         6,
         header_row
     );
-    _.each(permission_matrix, function(permission_row) {
+    _.each(fields, function(field){
+        var field_row = ['',field.label,'','','',field.apiname,'','',''];
+
+        var row_entry_readble = ['',field.label,'','',field.apiname,'','','参照可能'];;
+        var row_entry_readonly = ['',field.label,'','',field.apiname,'','','参照のみ'];;
+        _.each(profiles, function(profile) {
+            var permissions = field_permissions[profile];
+            var field_full_name = sheetname + '.' + field.apiname;
+            
+            if(permissions[field_full_name]){
+                if(permissions[field_full_name].readable !== undefined){
+                    row_entry_readble.push(permissions[field_full_name].readable);
+                }else{
+                    row_entry_readble.push('');
+                }
+                if(permissions[field_full_name].readonly !== undefined){
+                    row_entry_readonly.push(permissions[field_full_name].readonly);
+                }else{
+                    row_entry_readonly.push('');
+                }                
+            }else{
+                row_entry_readble.push('');
+                row_entry_readonly.push('');
+            }
+        });
         spread_field_permission.add_row(
             sheetname,
             row_number++,
-            permission_row,
+            row_entry_readble,
+            {'●': index_on_mark}
+        );
+        spread_field_permission.add_row(
+            sheetname,
+            row_number++,
+            row_entry_readonly,
             {'●': index_on_mark}
         );
     });
