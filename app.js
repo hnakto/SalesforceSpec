@@ -160,8 +160,8 @@ function set_validation_rules(){
             spread_validation_rule.add_row(
                 'Validation',
                 row_number++,
-                ['',(row_number-7),rule.active,rule.objectname,'','',rule.fullName,'','',rule.errorDisplayField,'','',
-                    rule.errorConditionFormula,'','','','','',rule.errorMessage,'','','',rule.description]
+                ['',(row_number-7),rule.active,rule.objectname,'','',rule.fullName,'','','',rule.errorDisplayField,'','',
+                    rule.errorConditionFormula,'','','','','','',rule.errorMessage,'','','','','','',rule.description]
             );
         });
     })
