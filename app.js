@@ -58,8 +58,8 @@ Promise.all([
 }).then(function(result) {
     set_layout_assignment(result);
 
-    spread_custom_field.bulk_copy_sheet('base',target_obj);
-    bulk_set_fields(target_obj, spec.metadata.fields);
+    spread_custom_field.bulk_copy_sheet('base',spec.metadata.custom_objs);
+    bulk_set_fields(spec.metadata.custom_objs, result.object_label, spec.metadata.fields);
     set_validation_rules();
     set_profile_crud();
     
@@ -69,6 +69,13 @@ Promise.all([
     set_workflow();
 
     return Promise.resolve();
+/**    
+}).then(function(){
+    return fileHelper.writeFile(
+        "./work/項目一覧.xlsx",
+        spread_custom_field.generate()
+    );
+*/
 }).then(function(){
     return fileHelper.writeFile(
         "./work/レイアウト一覧.xlsx",
@@ -124,13 +131,11 @@ function set_layout_assignment(result){
                     insert_row2.push('');
                 }
             });
-            /**
             spread_page_layout.add_row(
                 obj_name,
                 3,
                 ['','','','','','','','','','','','','','','','','','',result.object_label[obj_name] + '(' + obj_name + ')']
             );
-             */
             spread_page_layout.add_row(
                 obj_name,
                 6,
@@ -242,17 +247,15 @@ function set_validation_rules(){
  */
 function set_fields(
     sheetname,
+    object_label,
     fields
 ){
     var row_number = 7;
-    /**
     spread_page_layout.add_row(
         sheetname,
         3,
         ['','','','','','','','','','','','','','','','','','',object_label[sheetname] + '(' + sheetname + ')']
     );
-     */
-
     _.each(fields, function(field){
         spread_custom_field.add_row(
             sheetname,
@@ -353,9 +356,10 @@ function set_field_permissions(
  */
 function bulk_set_fields(
     sheetnames,
+    object_label,
     object_fields
 ) {
     _.each(sheetnames, function(object_name){
-        set_fields(object_name,object_fields[object_name]);
+        set_fields(object_name,object_label,object_fields[object_name]);
     })
 }
