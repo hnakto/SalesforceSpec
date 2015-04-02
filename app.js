@@ -52,17 +52,18 @@ Promise.all([
     return Promise.props({
         page_layouts: spec.page_layouts(),
         field_label: spec.field_label(),
-        field_type: spec.field_type()
+        field_type: spec.field_type(),
+        object_label: spec.object_label()
     });
 }).then(function(result) {
-    set_layout_assignment();
+    set_layout_assignment(result);
 
-    spread_custom_field.bulk_copy_sheet('field',target_obj);
+    spread_custom_field.bulk_copy_sheet('base',target_obj);
     bulk_set_fields(target_obj, spec.metadata.fields);
     set_validation_rules();
     set_profile_crud();
     
-    spread_field_permission.bulk_copy_sheet('CRUD', spec.metadata.custom_objs);
+    spread_field_permission.bulk_copy_sheet('base', spec.metadata.custom_objs);
     set_all_field_permissions();
 
     set_workflow();
@@ -99,8 +100,8 @@ Promise.all([
     log.error(err);
 });
 
-function set_layout_assignment(){
-    spread_page_layout.bulk_copy_sheet('Layout', spec.metadata.custom_objs);
+function set_layout_assignment(result){
+    spread_page_layout.bulk_copy_sheet('base', spec.metadata.custom_objs);
     _.each(spec.metadata.custom_objs, function(obj_name){
         var obj = result.page_layouts[obj_name];
         var row_number = 7;
@@ -123,6 +124,13 @@ function set_layout_assignment(){
                     insert_row2.push('');
                 }
             });
+            /**
+            spread_page_layout.add_row(
+                obj_name,
+                3,
+                ['','','','','','','','','','','','','','','','','','',result.object_label[obj_name] + '(' + obj_name + ')']
+            );
+             */
             spread_page_layout.add_row(
                 obj_name,
                 6,
@@ -150,7 +158,7 @@ function set_layout_assignment(){
  */
 function set_profile_crud(){
     spread_crud.add_row(
-        'CRUD',
+        'base',
         6,
         ['','オブジェクト','','','','','','CRUD'].concat(spec.metadata.valid_profiles)
     );
@@ -179,12 +187,12 @@ function set_profile_crud(){
             permission_all_r.push(permission? permission.viewAllRecords : '');
             permission_all_u.push(permission? permission.modifyAllRecords : '');
         }
-        spread_crud.add_row('CRUD',i*6+7,permission_c,mark);
-        spread_crud.add_row('CRUD',i*6+8,permission_r,mark);
-        spread_crud.add_row('CRUD',i*6+9,permission_u,mark);
-        spread_crud.add_row('CRUD',i*6+10,permission_d,mark);
-        spread_crud.add_row('CRUD',i*6+11,permission_all_r,mark);
-        spread_crud.add_row('CRUD',i*6+12,permission_all_u,mark);
+        spread_crud.add_row('base',i*6+7,permission_c,mark);
+        spread_crud.add_row('base',i*6+8,permission_r,mark);
+        spread_crud.add_row('base',i*6+9,permission_u,mark);
+        spread_crud.add_row('base',i*6+10,permission_d,mark);
+        spread_crud.add_row('base',i*6+11,permission_all_r,mark);
+        spread_crud.add_row('base',i*6+12,permission_all_u,mark);
     }
 }
 
@@ -198,7 +206,7 @@ function set_workflow(){
         var workflow_in_object = spec.metadata.work_flows[objectname];
         _.each(workflow_in_object, function(action){
             spread_workflow.add_row(
-                'WorkFlow',
+                'base',
                 row_number++,
                 ['',(row_number-10),action.workflow_active,objectname,'','',action.workflow_fullName,'','','',action.workflow_trigger_code,
                     action.workflow_criteria,'','',action.workflow_description,'','','','','','',action.type,'',action.fullName,'','',action.name_or_description,
@@ -217,7 +225,7 @@ function set_validation_rules(){
         var rules_in_object = spec.metadata.validation_rules[objectname];
         _.each(rules_in_object, function(rule){
             spread_validation_rule.add_row(
-                'Validation',
+                'base',
                 row_number++,
                 ['',(row_number-7),rule.active,rule.objectname,'','',rule.fullName,'','','',rule.errorDisplayField,'','',
                     rule.errorConditionFormula,'','','','','','',rule.errorMessage,'','','','','','',rule.description]
@@ -233,10 +241,18 @@ function set_validation_rules(){
  * @param fields
  */
 function set_fields(
-    sheetname, 
+    sheetname,
     fields
 ){
     var row_number = 7;
+    /**
+    spread_page_layout.add_row(
+        sheetname,
+        3,
+        ['','','','','','','','','','','','','','','','','','',object_label[sheetname] + '(' + sheetname + ')']
+    );
+     */
+
     _.each(fields, function(field){
         spread_custom_field.add_row(
             sheetname,
@@ -340,6 +356,6 @@ function bulk_set_fields(
     object_fields
 ) {
     _.each(sheetnames, function(object_name){
-        set_fields(object_name, object_fields[object_name]);
+        set_fields(object_name,object_fields[object_name]);
     })
 }
