@@ -34,6 +34,7 @@ var spread_validation_rule = new SpreadSheet('./template/Validation.xlsx');
 var spread_crud = new SpreadSheet('./template/ObjectPermission.xlsx');
 var spread_field_permission = new SpreadSheet('./template/FieldPermission.xlsx');
 var spread_workflow = new SpreadSheet('./template/WorkFlow.xlsx');
+var spread_page_layout = new SpreadSheet('./template/PageLayout.xlsx');
 
 var target_obj = [
     //ここにターゲットを記述
@@ -45,8 +46,17 @@ Promise.all([
     spread_validation_rule.initialize(),
     spread_crud.initialize(),
     spread_field_permission.initialize(),
-    spread_workflow.initialize()
+    spread_workflow.initialize(),
+    spread_page_layout.initialize()
 ]).then(function() {
+    return Promise.props({
+        page_layouts: spec.page_layouts(),
+        field_label: spec.field_label(),
+        field_type: spec.field_type()
+    });
+}).then(function(result) {
+    set_layout_assignment();
+
     spread_custom_field.bulk_copy_sheet('field',target_obj);
     bulk_set_fields(target_obj, spec.metadata.fields);
     set_validation_rules();
@@ -60,8 +70,8 @@ Promise.all([
     return Promise.resolve();
 }).then(function(){
     return fileHelper.writeFile(
-        "./work/カスタム項目一覧.xlsx",
-        spread_custom_field.generate()
+        "./work/レイアウト一覧.xlsx",
+        spread_page_layout.generate()
     );
 }).then(function(){
     return fileHelper.writeFile(
@@ -88,6 +98,50 @@ Promise.all([
 }).catch(function(err){
     log.error(err);
 });
+
+function set_layout_assignment(){
+    spread_page_layout.bulk_copy_sheet('Layout', spec.metadata.custom_objs);
+    _.each(spec.metadata.custom_objs, function(obj_name){
+        var obj = result.page_layouts[obj_name];
+        var row_number = 7;
+        _.each(Object.keys(obj), function(field_name){
+            var field = obj[field_name];
+            var insert_row0 = ['', '項目名', '','','','','','型',''];
+            var insert_row1 = ['', result.field_label[obj_name+'.'+field_name],'','',field_name, '', '', result.field_type[obj_name+'.'+field_name], '参照可能'];
+            var insert_row2 = ['', result.field_label[obj_name+'.'+field_name],'','',field_name, '', '', result.field_type[obj_name+'.'+field_name], '参照のみ'];
+            _.each(Object.keys(field), function(layout_name){
+                var layout_assignment = field[layout_name];
+                insert_row0.push(layout_name);
+                if(layout_assignment === 'Readonly'){
+                    insert_row1.push('●');
+                    insert_row2.push('●');
+                }else if(layout_assignment === 'Edit'){
+                    insert_row1.push('●');
+                    insert_row2.push('');
+                }else if(layout_assignment === 'Required'){
+                    insert_row1.push('必須');
+                    insert_row2.push('');
+                }
+            });
+            spread_page_layout.add_row(
+                obj_name,
+                6,
+                insert_row0
+            );
+            spread_page_layout.add_row(
+                obj_name,
+                row_number++,
+                insert_row1
+            );
+            spread_page_layout.add_row(
+                obj_name,
+                row_number++,
+                insert_row2
+            );
+        });
+    });
+}
+
 
 /**
  * * set_profile_crud
