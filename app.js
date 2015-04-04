@@ -2,21 +2,22 @@
  * * SalesforceSpec
  * * Metadata APIを使用して、Salesforce組織から定義情報を抽出してExcelファイルに出力する。
  * * <<出力情報>>
+ * *  - オブジェクト一覧   
  * *  - 項目一覧
- * *  - ページレイアウト一覧,プロファイル×レコードタイプ×ページレイアウトのマッピング
- * *  - 項目のページレイアウト配置状況一覧
- * *  - レコードタイプ一覧,及びレコードタイプ毎の選択リストの選択値
+ * *  - オブジェクト権限一覧
+ * *  - レイアウト一覧
+ * *  - ワークフロー一覧
  * *  - 入力規則一覧
- * *  - ワークフロー,アクション(項目自動更新,メールアラート)一覧
+ * *  - 項目レベル権限一覧
  * *
  * @author Satoshi Haga(satoshi.haga.github@gmail.com)
  * @data 03/17/2015
  */
 
 //require
-var fs = require('fs');
 var _ = require('underscore');
 var Promise = require('bluebird');
+var fs = Promise.promisifyAll(require("fs"));
 
 var SalesforceSpec = require('./lib/SalesforceSpec');
 var spec = new SalesforceSpec();
@@ -48,22 +49,16 @@ Promise.all([
     spread_field_permission.initialize(),
     spread_workflow.initialize(),
     spread_page_layout.initialize()
-]).then(function() {
-    return Promise.props({
-        page_layouts: spec.page_layouts(),
-        field_label: spec.field_label(),
-        field_type: spec.field_type(),
-        object_label: spec.object_label()
-    });
-}).then(function(result) {
-    set_layout_assignment(result);
+]).then(function(result) {
+    //レイアウト一覧
+    set_layout_assignment();
 
-    spread_custom_field.bulk_copy_sheet('base',spec.metadata.custom_objs);
-    bulk_set_fields(spec.metadata.custom_objs, result.object_label, spec.metadata.fields);
+    spread_custom_field.bulk_copy_sheet('base',spec.object_names);
+    bulk_set_fields(spec.object_names, spec.object_label, spec.custom_field());
     set_validation_rules();
     set_profile_crud();
     
-    spread_field_permission.bulk_copy_sheet('base', spec.metadata.custom_objs);
+    spread_field_permission.bulk_copy_sheet('base', spec.object_names);
     set_all_field_permissions();
 
     set_workflow();
@@ -77,46 +72,35 @@ Promise.all([
     );
 */
 }).then(function(){
-    return fileHelper.writeFile(
-        "./work/レイアウト一覧.xlsx",
-        spread_page_layout.generate()
-    );
+    return fs.writeFileAsync("./work/レイアウト一覧.xlsx",spread_page_layout.generate());
 }).then(function(){
-    return fileHelper.writeFile(
-        "./work/入力規則一覧.xlsx",
-        spread_validation_rule.generate()
-    );
+    return fs.writeFileAsync("./work/入力規則一覧.xlsx",spread_validation_rule.generate());
 }).then(function(){
-    return fileHelper.writeFile(
-        "./work/オブジェクト権限一覧.xlsx",
-        spread_crud.generate()
-    );
+    return fs.writeFileAsync("./work/オブジェクト権限一覧.xlsx",spread_crud.generate());
 }).then(function(){
-    return fileHelper.writeFile(
-        "./work/項目レベル権限一覧.xlsx",
-        spread_field_permission.generate()
-    );
+    return fs.writeFileAsync("./work/項目レベル権限一覧.xlsx",spread_field_permission.generate());
 }).then(function(){
-    return fileHelper.writeFile(
-        "./work/ワークフロー一覧.xlsx",
-        spread_workflow.generate()
-    );
+    return fs.writeFileAsync("./work/ワークフロー一覧.xlsx",spread_workflow.generate());
 }).then(function(){
     log.info('successfully finished.');
 }).catch(function(err){
     log.error(err);
 });
 
-function set_layout_assignment(result){
-    spread_page_layout.bulk_copy_sheet('base', spec.metadata.custom_objs);
-    _.each(spec.metadata.custom_objs, function(obj_name){
-        var obj = result.page_layouts[obj_name];
+/**
+ * * set_layout_assignment
+ * * レイアウト一覧の作成
+ */
+function set_layout_assignment(){
+    spread_page_layout.bulk_copy_sheet('base', spec.object_names);
+    _.each(spec.object_names, function(obj_name){
+        var obj = spec.page_layouts()[obj_name];
         var row_number = 7;
         _.each(Object.keys(obj), function(field_name){
             var field = obj[field_name];
             var insert_row0 = ['', '項目名', '','','','','','型',''];
-            var insert_row1 = ['', result.field_label[obj_name+'.'+field_name],'','',field_name, '', '', result.field_type[obj_name+'.'+field_name], '参照可能'];
-            var insert_row2 = ['', result.field_label[obj_name+'.'+field_name],'','',field_name, '', '', result.field_type[obj_name+'.'+field_name], '参照のみ'];
+            var insert_row1 = ['', spec.field_label()[obj_name+'.'+field_name],'','',field_name, '', '', spec.field_type()[obj_name+'.'+field_name], '参照可能'];
+            var insert_row2 = ['', spec.field_label()[obj_name+'.'+field_name],'','',field_name, '', '', spec.field_type()[obj_name+'.'+field_name], '参照のみ'];
             _.each(Object.keys(field), function(layout_name){
                 var layout_assignment = field[layout_name];
                 insert_row0.push(layout_name);
@@ -134,7 +118,7 @@ function set_layout_assignment(result){
             spread_page_layout.add_row(
                 obj_name,
                 3,
-                ['','','','','','','','','','','','','','','','','','',result.object_label[obj_name] + '(' + obj_name + ')']
+                ['','','','','','','','','','','','','','','','','','',spec.object_label()[obj_name] + '(' + obj_name + ')']
             );
             spread_page_layout.add_row(
                 obj_name,
@@ -155,24 +139,27 @@ function set_layout_assignment(result){
     });
 }
 
-
 /**
  * * set_profile_crud
  * * CRUD表を作成
  * *  
  */
 function set_profile_crud(){
+
+    var profiles = spec.valid_profile();
+    
     spread_crud.add_row(
         'base',
         6,
-        ['','オブジェクト','','','','','','CRUD'].concat(spec.metadata.valid_profiles)
+        ['','オブジェクト','','','','','','CRUD'].concat(profiles)
     );
     var index_on_mark = spread_crud.shared_strings.add_string('●');
     var mark = {'●':index_on_mark};
     
-    var profile_crud = spec.metadata.profile_crud;
-    for(var i = 0; i<spec.metadata.custom_objs.length; i++){
-        var obj_apiname = spec.metadata.custom_objs[i];
+    var object_permission = spec.object_permission();
+    
+    for(var i = 0; i<spec.object_names.length; i++){
+        var obj_apiname = spec.object_names[i];
         var objname = spec.get_labelname(obj_apiname);
 
         var permission_c = ['',objname,'','',obj_apiname,'','','作成'];
@@ -181,10 +168,9 @@ function set_profile_crud(){
         var permission_d = ['',objname,'','',obj_apiname,'','','削除'];
         var permission_all_r = ['',objname,'','',obj_apiname,'','','すべて参照'];
         var permission_all_u = ['',objname,'','',obj_apiname,'','','すべて更新'];
-
-        for(var j = 0; j<spec.metadata.valid_profiles.length; j++){
-            var profile_name = spec.metadata.valid_profiles[j];
-            var permission = (profile_crud[profile_name])[obj_apiname];
+        for(var j = 0; j<profiles.length; j++){
+            var profile_name = profiles[j];
+            var permission = (object_permission[profile_name])[obj_apiname];
             permission_c.push(permission? permission.allowCreate : '');
             permission_r.push(permission? permission.allowRead : '');
             permission_u.push(permission? permission.allowEdit : '');
@@ -207,8 +193,8 @@ function set_profile_crud(){
  */
 function set_workflow(){
     var row_number = 10;
-    _.each(Object.keys(spec.metadata.work_flows), function(objectname){
-        var workflow_in_object = spec.metadata.work_flows[objectname];
+    _.each(Object.keys(spec.workflow()), function(objectname){
+        var workflow_in_object = spec.workflow()[objectname];
         _.each(workflow_in_object, function(action){
             spread_workflow.add_row(
                 'base',
@@ -226,8 +212,9 @@ function set_workflow(){
  */
 function set_validation_rules(){
     var row_number = 7;
-    _.each(Object.keys(spec.metadata.validation_rules), function(objectname){
-        var rules_in_object = spec.metadata.validation_rules[objectname];
+    var validation_rules = spec.validation_rule();
+    _.each(Object.keys(validation_rules), function(objectname){
+        var rules_in_object = validation_rules[objectname];
         _.each(rules_in_object, function(rule){
             spread_validation_rule.add_row(
                 'base',
@@ -272,12 +259,12 @@ function set_fields(
  */
 function set_all_field_permissions(){
     var index_on_mark = spread_field_permission.shared_strings.add_string('●');
-    _.each(spec.metadata.custom_objs, function(obj){
+    _.each(spec.object_names, function(obj){
         set_field_permissions(
             obj,
-            spec.metadata.valid_profiles,
-            spec.metadata.field_permission,
-            spec.metadata.fields[obj],
+            spec.valid_profile(),
+            spec.field_permission(),
+            spec.custom_field()[obj],
             index_on_mark
         );
     });
