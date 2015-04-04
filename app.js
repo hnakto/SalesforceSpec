@@ -115,22 +115,22 @@ function set_layout_assignment(){
                     insert_row2.push('');
                 }
             });
-            spread_page_layout.add_row(
+            spread_page_layout.set_row(
                 obj_name,
                 3,
                 ['','','','','','','','','','','','','','','','','','',spec.object_label()[obj_name] + '(' + obj_name + ')']
             );
-            spread_page_layout.add_row(
+            spread_page_layout.set_row(
                 obj_name,
                 6,
                 insert_row0
             );
-            spread_page_layout.add_row(
+            spread_page_layout.set_row(
                 obj_name,
                 row_number++,
                 insert_row1
             );
-            spread_page_layout.add_row(
+            spread_page_layout.set_row(
                 obj_name,
                 row_number++,
                 insert_row2
@@ -148,7 +148,7 @@ function set_profile_crud(){
 
     var profiles = spec.valid_profile();
     
-    spread_crud.add_row(
+    spread_crud.set_row(
         'base',
         6,
         ['','オブジェクト','','','','','','CRUD'].concat(profiles)
@@ -178,12 +178,12 @@ function set_profile_crud(){
             permission_all_r.push(permission? permission.viewAllRecords : '');
             permission_all_u.push(permission? permission.modifyAllRecords : '');
         }
-        spread_crud.add_row('base',i*6+7,permission_c,mark);
-        spread_crud.add_row('base',i*6+8,permission_r,mark);
-        spread_crud.add_row('base',i*6+9,permission_u,mark);
-        spread_crud.add_row('base',i*6+10,permission_d,mark);
-        spread_crud.add_row('base',i*6+11,permission_all_r,mark);
-        spread_crud.add_row('base',i*6+12,permission_all_u,mark);
+        spread_crud.set_row('base',i*6+7,permission_c,mark);
+        spread_crud.set_row('base',i*6+8,permission_r,mark);
+        spread_crud.set_row('base',i*6+9,permission_u,mark);
+        spread_crud.set_row('base',i*6+10,permission_d,mark);
+        spread_crud.set_row('base',i*6+11,permission_all_r,mark);
+        spread_crud.set_row('base',i*6+12,permission_all_u,mark);
     }
 }
 
@@ -196,7 +196,7 @@ function set_workflow(){
     _.each(Object.keys(spec.workflow()), function(objectname){
         var workflow_in_object = spec.workflow()[objectname];
         _.each(workflow_in_object, function(action){
-            spread_workflow.add_row(
+            spread_workflow.set_row(
                 'base',
                 row_number++,
                 ['',(row_number-10),action.workflow_active,objectname,'','',action.workflow_fullName,'','','',action.workflow_trigger_code,
@@ -216,7 +216,7 @@ function set_validation_rules(){
     _.each(Object.keys(validation_rules), function(objectname){
         var rules_in_object = validation_rules[objectname];
         _.each(rules_in_object, function(rule){
-            spread_validation_rule.add_row(
+            spread_validation_rule.set_row(
                 'base',
                 row_number++,
                 ['',(row_number-7),rule.active,rule.objectname,'','',rule.fullName,'','','',rule.errorDisplayField,'','',
@@ -238,13 +238,13 @@ function set_fields(
     fields
 ){
     var row_number = 7;
-    spread_page_layout.add_row(
+    spread_page_layout.set_row(
         sheetname,
         3,
         ['','','','','','','','','','','','','','','','','','',object_label[sheetname] + '(' + sheetname + ')']
     );
     _.each(fields, function(field){
-        spread_custom_field.add_row(
+        spread_custom_field.set_row(
             sheetname,
             row_number++,
             ['',(row_number-7),field.label,'','','',field.apiname,'','','',field.type,'',field.formula ? field.formula : field.picklistValues,
@@ -290,11 +290,7 @@ function set_field_permissions(
     _.each(profiles, function(profile) {
         header_row.push(profile);
     });
-    spread_field_permission.add_row(
-        sheetname,
-        6,
-        header_row
-    );
+    spread_field_permission.set_row(sheetname,6,header_row);
     _.each(fields, function(field){
         var field_row = ['',field.label,'','','',field.apiname,'','',''];
 
@@ -320,18 +316,8 @@ function set_field_permissions(
                 row_entry_readonly.push('');
             }
         });
-        spread_field_permission.add_row(
-            sheetname,
-            row_number++,
-            row_entry_readble,
-            {'●': index_on_mark}
-        );
-        spread_field_permission.add_row(
-            sheetname,
-            row_number++,
-            row_entry_readonly,
-            {'●': index_on_mark}
-        );
+        spread_field_permission.set_row(sheetname, row_number++, row_entry_readble, {'●': index_on_mark});
+        spread_field_permission.set_row(sheetname, row_number++, row_entry_readonly,{'●': index_on_mark});
     });
 }
 
