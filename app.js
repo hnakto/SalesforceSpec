@@ -101,7 +101,7 @@ function build_object_permission(){
     var object_permission = spec.object_permission();
     for(var i = 0; i<spec.object_names.length; i++){
         var obj_apiname = spec.object_names[i];
-        var objname = spec.get_labelname(obj_apiname);
+        var objname = spec.label_name(obj_apiname);
         var permission_c = ['',objname,'','',obj_apiname,'','','作成'];
         var permission_r = ['',objname,'','',obj_apiname,'','','読み取り'];
         var permission_u = ['',objname,'','',obj_apiname,'','','更新'];
@@ -205,13 +205,11 @@ function build_field_permission(){
         spread_field_permission.set_row(sheetname,6,header_row);
         _.each(fields, function(field){
             var field_row = ['',field.label,'','','',field.apiname,'','',''];
-
             var row_entry_readble = ['',field.label,'','',field.apiname,'','','参照可能'];;
             var row_entry_readonly = ['',field.label,'','',field.apiname,'','','参照のみ'];;
             _.each(profiles, function(profile) {
                 var permissions = field_permissions[profile];
                 var field_full_name = sheetname + '.' + field.apiname;
-
                 if(permissions[field_full_name]){
                     if(permissions[field_full_name].readable !== undefined){
                         row_entry_readble.push(permissions[field_full_name].readable);

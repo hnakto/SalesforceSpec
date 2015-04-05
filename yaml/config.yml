@@ -19,3 +19,7 @@ target_license:
   - Force.com - App Subscription
 target_profile:
   - Admin
+
+target_standard_object:
+  - Account
+  - Contact
