@@ -1,0 +1,21 @@
+template_directory: ./template/
+template_file:
+  page_layout: PageLayout.xlsx
+  validation: Validation.xlsx
+  workflow: WorkFlow.xlsx
+  field_permission: FieldPermission.xlsx
+  object_permission: ObjectPermission.xlsx
+  custom_field: CustomField.xlsx
+
+output_directory: ./work/
+output_file:
+  page_layout: レイアウト一覧.xlsx
+  validation: 入力規則一覧.xlsx
+  workflow: ワークフロー一覧.xlsx
+  field_permission: 項目レベル権限一覧.xlsx
+  object_permission: オブジェクト権限一覧.xlsx
+
+target_license:
+  - Force.com - App Subscription
+target_profile:
+  - Admin

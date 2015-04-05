@@ -14,17 +14,20 @@ var Promise = require('bluebird');
 var fs = Promise.promisifyAll(require("fs"));
 var Log = require('log');
 var log = new Log(Log.DEBUG);
+var yaml = require('js-yaml');
 
 var SpreadSheet = require('./lib/SpreadSheet');
 var SalesforceSpec = require('./lib/SalesforceSpec');
 var spec = new SalesforceSpec();
 
-var spread_custom_field = new SpreadSheet('./template/CustomField.xlsx');
-var spread_validation_rule = new SpreadSheet('./template/Validation.xlsx');
-var spread_crud = new SpreadSheet('./template/ObjectPermission.xlsx');
-var spread_field_permission = new SpreadSheet('./template/FieldPermission.xlsx');
-var spread_workflow = new SpreadSheet('./template/WorkFlow.xlsx');
-var spread_page_layout = new SpreadSheet('./template/PageLayout.xlsx');
+var config = load_config();
+
+var spread_custom_field = new SpreadSheet(config.template_directory + config.template_file.custom_field);
+var spread_validation_rule = new SpreadSheet(config.template_directory + config.template_file.validation);
+var spread_crud = new SpreadSheet(config.template_directory + config.template_file.object_permission);
+var spread_field_permission = new SpreadSheet(config.template_directory + config.template_file.field_permission);
+var spread_workflow = new SpreadSheet(config.template_directory + config.template_file.workflow);
+var spread_page_layout = new SpreadSheet(config.template_directory + config.template_file.page_layout);
 
 Promise.all([
     spec.initialize(),
@@ -87,7 +90,7 @@ function build_page_layout(){
         });
     });
     log.info('page_layout is created successfully');
-    return fs.writeFileAsync("./work/レイアウト一覧.xlsx",spread_page_layout.generate());
+    return fs.writeFileAsync(config.output_directory + config.output_file.page_layout,spread_page_layout.generate());
 }
 
 function build_object_permission(){
@@ -123,7 +126,7 @@ function build_object_permission(){
         spread_crud.set_row('base',i*6+12,permission_all_u,mark);
     }
     log.info('object_permission is created successfully');
-    return fs.writeFileAsync("./work/オブジェクト権限一覧.xlsx",spread_crud.generate());
+    return fs.writeFileAsync(config.output_directory + config.output_file.object_permission, spread_crud.generate());
 }
 
 function build_workflow(){
@@ -141,7 +144,7 @@ function build_workflow(){
         });
     });
     log.info('workflow is created successfully');
-    return fs.writeFileAsync("./work/ワークフロー一覧.xlsx",spread_workflow.generate());
+    return fs.writeFileAsync(config.output_directory + config.output_file.workflow,spread_workflow.generate());
 }
 function build_validation(){
     var row_number = 7;
@@ -157,7 +160,7 @@ function build_validation(){
             );
         });
     });
-    return fs.writeFileAsync("./work/入力規則一覧.xlsx",spread_validation_rule.generate());
+    return fs.writeFileAsync(config.output_directory + config.output_file.validation,spread_validation_rule.generate());
 }   
 
 /**
@@ -229,7 +232,7 @@ function build_field_permission(){
             spread_field_permission.set_row(sheetname, row_number++, row_entry_readonly,{'●': index_on_mark});
         });
     });
-    return fs.writeFileAsync("./work/項目レベル権限一覧.xlsx",spread_field_permission.generate());
+    return fs.writeFileAsync(config.output_directory + config.output_file.field_permission,spread_field_permission.generate());
 }
 
 /**
@@ -246,4 +249,9 @@ function bulk_set_fields(
     _.each(sheetnames, function(object_name){
         set_fields(object_name,object_label,object_fields[object_name]);
     })
+}
+
+function load_config(){
+    var config = yaml.safeLoad(fs.readFileSync('./yaml/config.yml', 'utf8'));
+    return config;
 }
