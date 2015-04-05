@@ -161,7 +161,7 @@ function build_validation(){
         });
     });
     return fs.writeFileAsync(config.output_directory + config.output_file.validation,spread_validation_rule.generate());
-}   
+}
 
 /**
  * * set_fields
@@ -187,7 +187,7 @@ function set_fields(
             ['',(row_number-7),field.label,'','','',field.apiname,'','','',field.type,'',field.formula ? field.formula : field.picklistValues,
                 '','','',field.defaultValue,'','',field.required,field.unique,field.externalId,field.trackHistory,field.trackTrending,field.description]
         );
-    })
+    });
 }
 
 function build_field_permission(){

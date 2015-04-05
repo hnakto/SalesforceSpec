@@ -1,3 +1,7 @@
+system_name: ライツ契約管理システム
+created_by: 株式会社パソナテキーラ
+temporary_directory: temp
+
 template_directory: ./template/
 template_file:
   page_layout: PageLayout.xlsx
