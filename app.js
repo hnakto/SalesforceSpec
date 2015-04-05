@@ -2,14 +2,8 @@
  * * SalesforceSpec
  * * Metadata APIを使用して、Salesforce組織から定義情報を抽出してExcelファイルに出力する。
  * * <<出力情報>>
- * *  - オブジェクト一覧   
- * *  - 項目一覧
- * *  - オブジェクト権限一覧
- * *  - レイアウト一覧
- * *  - ワークフロー一覧
- * *  - 入力規則一覧
- * *  - 項目レベル権限一覧
- * *
+ * *  - オブジェクト一覧, 項目一覧, オブジェクト権限一覧, レイアウト一覧
+ * *  - ワークフロー一覧, 入力規則一覧,項目レベル権限一覧
  * @author Satoshi Haga(satoshi.haga.github@gmail.com)
  * @data 03/17/2015
  */
@@ -18,17 +12,12 @@
 var _ = require('underscore');
 var Promise = require('bluebird');
 var fs = Promise.promisifyAll(require("fs"));
+var Log = require('log');
+var log = new Log(Log.DEBUG);
 
+var SpreadSheet = require('./lib/SpreadSheet');
 var SalesforceSpec = require('./lib/SalesforceSpec');
 var spec = new SalesforceSpec();
-var SpreadSheet = require('./lib/SpreadSheet');
-var Utility = require('./lib/Util');
-var util = new Utility();
-var FileHelper = require('./lib/FileHelper');
-var fileHelper = new FileHelper();
-
-var Log = require('log')
-var log = new Log(Log.DEBUG);
 
 var spread_custom_field = new SpreadSheet('./template/CustomField.xlsx');
 var spread_validation_rule = new SpreadSheet('./template/Validation.xlsx');
@@ -36,10 +25,6 @@ var spread_crud = new SpreadSheet('./template/ObjectPermission.xlsx');
 var spread_field_permission = new SpreadSheet('./template/FieldPermission.xlsx');
 var spread_workflow = new SpreadSheet('./template/WorkFlow.xlsx');
 var spread_page_layout = new SpreadSheet('./template/PageLayout.xlsx');
-
-var target_obj = [
-    //ここにターゲットを記述
-];
 
 Promise.all([
     spec.initialize(),
@@ -49,21 +34,14 @@ Promise.all([
     spread_field_permission.initialize(),
     spread_workflow.initialize(),
     spread_page_layout.initialize()
-]).then(function(result) {
-    //レイアウト一覧
-    set_layout_assignment();
-
-    spread_custom_field.bulk_copy_sheet('base',spec.object_names);
-    bulk_set_fields(spec.object_names, spec.object_label, spec.custom_field());
-    set_validation_rules();
-    set_profile_crud();
-    
-    spread_field_permission.bulk_copy_sheet('base', spec.object_names);
-    set_all_field_permissions();
-
-    set_workflow();
-
-    return Promise.resolve();
+]).then(function() {
+    return Promise.all([
+        build_page_layout(),
+        build_validation(),
+        build_workflow(),
+        build_field_permission(),
+        build_object_permission()
+    ]);
 /**    
 }).then(function(){
     return fileHelper.writeFile(
@@ -72,30 +50,18 @@ Promise.all([
     );
 */
 }).then(function(){
-    return fs.writeFileAsync("./work/レイアウト一覧.xlsx",spread_page_layout.generate());
-}).then(function(){
-    return fs.writeFileAsync("./work/入力規則一覧.xlsx",spread_validation_rule.generate());
-}).then(function(){
-    return fs.writeFileAsync("./work/オブジェクト権限一覧.xlsx",spread_crud.generate());
-}).then(function(){
-    return fs.writeFileAsync("./work/項目レベル権限一覧.xlsx",spread_field_permission.generate());
-}).then(function(){
-    return fs.writeFileAsync("./work/ワークフロー一覧.xlsx",spread_workflow.generate());
-}).then(function(){
     log.info('successfully finished.');
 }).catch(function(err){
     log.error(err);
 });
 
-/**
- * * set_layout_assignment
- * * レイアウト一覧の作成
- */
-function set_layout_assignment(){
+function build_page_layout(){
     spread_page_layout.bulk_copy_sheet('base', spec.object_names);
     _.each(spec.object_names, function(obj_name){
         var obj = spec.page_layouts()[obj_name];
         var row_number = 7;
+        var header_value = ['','','','','','','','','','','','','','','','','','',spec.object_label()[obj_name] + '(' + obj_name + ')'];
+        spread_page_layout.set_row(obj_name,3,header_value);
         _.each(Object.keys(obj), function(field_name){
             var field = obj[field_name];
             var insert_row0 = ['', '項目名', '','','','','','型',''];
@@ -115,53 +81,24 @@ function set_layout_assignment(){
                     insert_row2.push('');
                 }
             });
-            spread_page_layout.set_row(
-                obj_name,
-                3,
-                ['','','','','','','','','','','','','','','','','','',spec.object_label()[obj_name] + '(' + obj_name + ')']
-            );
-            spread_page_layout.set_row(
-                obj_name,
-                6,
-                insert_row0
-            );
-            spread_page_layout.set_row(
-                obj_name,
-                row_number++,
-                insert_row1
-            );
-            spread_page_layout.set_row(
-                obj_name,
-                row_number++,
-                insert_row2
-            );
+            spread_page_layout.set_row(obj_name,6,insert_row0);
+            spread_page_layout.set_row(obj_name,row_number++,insert_row1);
+            spread_page_layout.set_row(obj_name,row_number++,insert_row2);
         });
     });
+    log.info('page_layout is created successfully');
+    return fs.writeFileAsync("./work/レイアウト一覧.xlsx",spread_page_layout.generate());
 }
 
-/**
- * * set_profile_crud
- * * CRUD表を作成
- * *  
- */
-function set_profile_crud(){
-
+function build_object_permission(){
     var profiles = spec.valid_profile();
-    
-    spread_crud.set_row(
-        'base',
-        6,
-        ['','オブジェクト','','','','','','CRUD'].concat(profiles)
-    );
+    spread_crud.set_row('base',6,['','オブジェクト','','','','','','CRUD'].concat(profiles));
     var index_on_mark = spread_crud.shared_strings.add_string('●');
     var mark = {'●':index_on_mark};
-    
     var object_permission = spec.object_permission();
-    
     for(var i = 0; i<spec.object_names.length; i++){
         var obj_apiname = spec.object_names[i];
         var objname = spec.get_labelname(obj_apiname);
-
         var permission_c = ['',objname,'','',obj_apiname,'','','作成'];
         var permission_r = ['',objname,'','',obj_apiname,'','','読み取り'];
         var permission_u = ['',objname,'','',obj_apiname,'','','更新'];
@@ -185,13 +122,11 @@ function set_profile_crud(){
         spread_crud.set_row('base',i*6+11,permission_all_r,mark);
         spread_crud.set_row('base',i*6+12,permission_all_u,mark);
     }
+    log.info('object_permission is created successfully');
+    return fs.writeFileAsync("./work/オブジェクト権限一覧.xlsx",spread_crud.generate());
 }
 
-/**
- * * set_workflow
- * * ワークフロー一覧
- */
-function set_workflow(){
+function build_workflow(){
     var row_number = 10;
     _.each(Object.keys(spec.workflow()), function(objectname){
         var workflow_in_object = spec.workflow()[objectname];
@@ -204,13 +139,11 @@ function set_workflow(){
                     '','','','',action.field_or_recipients,'',action.update_value_or_template]
             );
         });
-    })
+    });
+    log.info('workflow is created successfully');
+    return fs.writeFileAsync("./work/ワークフロー一覧.xlsx",spread_workflow.generate());
 }
-/***
- * * set_validation_rules
- * * (入力規則)
- */
-function set_validation_rules(){
+function build_validation(){
     var row_number = 7;
     var validation_rules = spec.validation_rule();
     _.each(Object.keys(validation_rules), function(objectname){
@@ -223,7 +156,8 @@ function set_validation_rules(){
                     rule.errorConditionFormula,'','','','','','',rule.errorMessage,'','','','','','',rule.description]
             );
         });
-    })
+    });
+    return fs.writeFileAsync("./work/入力規則一覧.xlsx",spread_validation_rule.generate());
 }   
 
 /**
@@ -253,72 +187,49 @@ function set_fields(
     })
 }
 
-/**
- * * set_all_field_permissions
- * * すべてのシートに、Field Permissionを保存する
- */
-function set_all_field_permissions(){
+function build_field_permission(){
+    spread_field_permission.bulk_copy_sheet('base', spec.object_names);
     var index_on_mark = spread_field_permission.shared_strings.add_string('●');
-    _.each(spec.object_names, function(obj){
-        set_field_permissions(
-            obj,
-            spec.valid_profile(),
-            spec.field_permission(),
-            spec.custom_field()[obj],
-            index_on_mark
-        );
-    });
-}
-
-/**
- * * set_field_permissions
- * * 引数のシートに、Field Permissionを保存する
- * @param sheetname
- * @param profiles
- * @param field_permissions
- * @param fields
- */
-function set_field_permissions(
-    sheetname,
-    profiles,
-    field_permissions,      //Profile名 × fieldのAPI名(--__c.--__c) → {readable: ''or'●', readonly: ''or'●'}
-    fields,
-    index_on_mark
-){
-    var row_number = 7;
-    var header_row = ['','オブジェクト','','','','','','CRUD'];
-    _.each(profiles, function(profile) {
-        header_row.push(profile);
-    });
-    spread_field_permission.set_row(sheetname,6,header_row);
-    _.each(fields, function(field){
-        var field_row = ['',field.label,'','','',field.apiname,'','',''];
-
-        var row_entry_readble = ['',field.label,'','',field.apiname,'','','参照可能'];;
-        var row_entry_readonly = ['',field.label,'','',field.apiname,'','','参照のみ'];;
+    _.each(spec.object_names, function(sheetname){
+        var profiles = spec.valid_profile();
+        var field_permissions = spec.field_permission();
+        var fields = spec.custom_field()[sheetname];
+        var row_number = 7;
+        var header_row = ['','オブジェクト','','','','','','CRUD'];
         _.each(profiles, function(profile) {
-            var permissions = field_permissions[profile];
-            var field_full_name = sheetname + '.' + field.apiname;
-            
-            if(permissions[field_full_name]){
-                if(permissions[field_full_name].readable !== undefined){
-                    row_entry_readble.push(permissions[field_full_name].readable);
+            header_row.push(profile);
+        });
+        spread_field_permission.set_row(sheetname,6,header_row);
+        _.each(fields, function(field){
+            var field_row = ['',field.label,'','','',field.apiname,'','',''];
+
+            var row_entry_readble = ['',field.label,'','',field.apiname,'','','参照可能'];;
+            var row_entry_readonly = ['',field.label,'','',field.apiname,'','','参照のみ'];;
+            _.each(profiles, function(profile) {
+                var permissions = field_permissions[profile];
+                var field_full_name = sheetname + '.' + field.apiname;
+
+                if(permissions[field_full_name]){
+                    if(permissions[field_full_name].readable !== undefined){
+                        row_entry_readble.push(permissions[field_full_name].readable);
+                    }else{
+                        row_entry_readble.push('');
+                    }
+                    if(permissions[field_full_name].readonly !== undefined){
+                        row_entry_readonly.push(permissions[field_full_name].readonly);
+                    }else{
+                        row_entry_readonly.push('');
+                    }
                 }else{
                     row_entry_readble.push('');
-                }
-                if(permissions[field_full_name].readonly !== undefined){
-                    row_entry_readonly.push(permissions[field_full_name].readonly);
-                }else{
                     row_entry_readonly.push('');
-                }                
-            }else{
-                row_entry_readble.push('');
-                row_entry_readonly.push('');
-            }
+                }
+            });
+            spread_field_permission.set_row(sheetname, row_number++, row_entry_readble, {'●': index_on_mark});
+            spread_field_permission.set_row(sheetname, row_number++, row_entry_readonly,{'●': index_on_mark});
         });
-        spread_field_permission.set_row(sheetname, row_number++, row_entry_readble, {'●': index_on_mark});
-        spread_field_permission.set_row(sheetname, row_number++, row_entry_readonly,{'●': index_on_mark});
     });
+    return fs.writeFileAsync("./work/項目レベル権限一覧.xlsx",spread_field_permission.generate());
 }
 
 /**
