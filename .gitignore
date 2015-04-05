@@ -1,9 +1,8 @@
 # Created by .gitignore support plugin (hsz.mobi)
 .idea
 node_modules
-temp/*
+temp
 .env
-work
+output/*.xlsx
 work/*
-excel.js
 package.xml

@@ -11,7 +11,7 @@ template_file:
   object_permission: ObjectPermission.xlsx
   custom_field: CustomField.xlsx
 
-output_directory: ./work/
+output_directory: ./output/
 output_file:
   page_layout: レイアウト一覧.xlsx
   validation: 入力規則一覧.xlsx
