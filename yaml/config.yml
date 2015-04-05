@@ -18,7 +18,8 @@ output_file:
   workflow: ワークフロー一覧.xlsx
   field_permission: 項目レベル権限一覧.xlsx
   object_permission: オブジェクト権限一覧.xlsx
-
+  custom_field: カスタム項目一覧.xlsx
+  
 target_license:
   - Force.com - App Subscription
 target_profile:

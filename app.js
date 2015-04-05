@@ -43,15 +43,9 @@ Promise.all([
         build_validation(),
         build_workflow(),
         build_field_permission(),
-        build_object_permission()
+        build_object_permission(),
+        build_custom_field()
     ]);
-/**    
-}).then(function(){
-    return fileHelper.writeFile(
-        "./work/項目一覧.xlsx",
-        spread_custom_field.generate()
-    );
-*/
 }).then(function(){
     log.info('successfully finished.');
 }).catch(function(err){
@@ -146,6 +140,7 @@ function build_workflow(){
     log.info('workflow is created successfully');
     return fs.writeFileAsync(config.output_directory + config.output_file.workflow,spread_workflow.generate());
 }
+
 function build_validation(){
     var row_number = 7;
     var validation_rules = spec.validation_rule();
@@ -163,31 +158,28 @@ function build_validation(){
     return fs.writeFileAsync(config.output_directory + config.output_file.validation,spread_validation_rule.generate());
 }
 
-/**
- * * set_fields
- * * (項目定義書)1シートに値をセットする
- * @param sheetname
- * @param fields
- */
-function set_fields(
-    sheetname,
-    object_label,
-    fields
-){
-    var row_number = 7;
-    spread_page_layout.set_row(
-        sheetname,
-        3,
-        ['','','','','','','','','','','','','','','','','','',object_label[sheetname] + '(' + sheetname + ')']
-    );
-    _.each(fields, function(field){
+function build_custom_field(){
+    spread_custom_field.bulk_copy_sheet('base', spec.object_names);
+    var all_custom_fields = spec.custom_field();
+    _.each(spec.object_names, function(obj_name){
+        var row_number = 7;
         spread_custom_field.set_row(
-            sheetname,
-            row_number++,
-            ['',(row_number-7),field.label,'','','',field.apiname,'','','',field.type,'',field.formula ? field.formula : field.picklistValues,
-                '','','',field.defaultValue,'','',field.required,field.unique,field.externalId,field.trackHistory,field.trackTrending,field.description]
+            obj_name,
+            3,
+            ['','','','','','','','','','','','','','','','','','',spec.object_label(obj_name) + '(' + obj_name + ')']
         );
+        var custom_fields = all_custom_fields[obj_name];
+        _.each(custom_fields, function(field){
+            console.log(field.label);
+            spread_custom_field.set_row(
+                obj_name,
+                row_number++,
+                ['',(row_number-7),field.label,'','','',field.apiname,'','','',field.type,'',field.formula ? field.formula : field.picklistValues,
+                    '','','',field.defaultValue,'','',field.required,field.unique,field.externalId,field.trackHistory,field.trackTrending,field.description]
+            );
+        });
     });
+    return fs.writeFileAsync(config.output_directory + config.output_file.custom_field, spread_custom_field.generate());
 }
 
 function build_field_permission(){
@@ -231,22 +223,6 @@ function build_field_permission(){
         });
     });
     return fs.writeFileAsync(config.output_directory + config.output_file.field_permission,spread_field_permission.generate());
-}
-
-/**
- * * bulk_set_fields
- * * 複数のシートに値をセットする
- * @param sheetnames
- * @param object_fields
- */
-function bulk_set_fields(
-    sheetnames,
-    object_label,
-    object_fields
-) {
-    _.each(sheetnames, function(object_name){
-        set_fields(object_name,object_label,object_fields[object_name]);
-    })
 }
 
 function load_config(){
