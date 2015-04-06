@@ -53,61 +53,6 @@ Promise.all([
     log.error(err);
 });
 
-function build_page_layout(){
-    var documentname = config.output_file.page_layout.replace('.xlsx','');
-    set_summary_header(spread_page_layout, documentname, '-');
-    spread_page_layout.set_row('summary',6,['','No','オブジェクト名','','','','','レイアウト名','','','','','備考']);
-    var row_number = 7;
-    _.each(Object.keys(spec.page_layout_list()), function(object_name){
-        var layouts = spec.page_layout_list()[object_name];
-        _.each(layouts, function(layout){
-            spread_page_layout.set_row('summary',row_number,['',(row_number++ - 6),object_name,'','','','',layout]);
-        });
-    });
-    set_header(spread_page_layout, documentname, '-');
-    spread_page_layout.bulk_copy_sheet('base', spec.object_names);
-    spread_page_layout.delete_sheet('base');
-    spread_page_layout.active_sheet(spec.object_names[0]);
-    _.each(spec.object_names, function(obj_name){
-        var obj = spec.page_layouts()[obj_name];
-        row_number = 7;
-        _.each(Object.keys(obj), function(field_name){
-            var field = obj[field_name];
-            var insert_row0 = ['', '項目名', '','','','','','型',''];
-            var layouts = Object.keys(field);
-            layouts = _.map(layouts, function(e){return e.replace(obj_name+'-','')});
-            spread_page_layout.set_row(obj_name,3,insert_row0.concat(layouts));
-            spread_page_layout.set_row(obj_name,3,
-                [config.system_name,'','','','','','','','',documentname,'','','','','','','','',
-                    obj_name,'','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
-
-            spread_page_layout.set_row(obj_name,6,insert_row0.concat(layouts));
-            
-            var insert_row1 = ['', spec.field_label()[obj_name+'.'+field_name],'','',field_name, '', '', spec.field_type()[obj_name+'.'+field_name], '参照可能'];
-            var insert_row2 = ['', spec.field_label()[obj_name+'.'+field_name],'','',field_name, '', '', spec.field_type()[obj_name+'.'+field_name], '参照のみ'];
-            _.each(Object.keys(field), function(layout_name){
-                var layout_assignment = field[layout_name];
-                insert_row0.push(layout_name);
-                if(layout_assignment === 'Readonly'){
-                    insert_row1.push('●');
-                    insert_row2.push('●');
-                }else if(layout_assignment === 'Edit'){
-                    insert_row1.push('●');
-                    insert_row2.push('');
-                }else if(layout_assignment === 'Required'){
-                    insert_row1.push('必須');
-                    insert_row2.push('');
-                }
-            });
-            
-            spread_page_layout.set_row(obj_name,row_number++,insert_row1);
-            spread_page_layout.set_row(obj_name,row_number++,insert_row2);
-        });
-    });
-    log.info('page_layout is created successfully');
-    return fs.writeFileAsync(config.output_directory + config.output_file.page_layout,spread_page_layout.generate());
-}
-
 function build_object_permission(){
     var profiles = spec.valid_profile();
     set_header(spread_crud, config.output_file.object_permission.replace('.xlsx',''), '-');
@@ -273,6 +218,21 @@ function build_field_permission(){
     return fs.writeFileAsync(config.output_directory + config.output_file.field_permission,spread_field_permission.generate());
 }
 
+function build_page_layout(){
+    var documentname = config.output_file.page_layout.replace('.xlsx','');
+    set_summary_header(spread_page_layout, documentname, '-');
+    spread_page_layout.set_row('base',6,['','No','オブジェクト名','','','','','レイアウト名','','','','','備考']);
+    var row_number = 7;
+    _.each(Object.keys(spec.page_layout_list()), function(object_name){
+        var layouts = spec.page_layout_list()[object_name];
+        _.each(layouts, function(layout){
+            spread_page_layout.set_row('base',row_number,['',(row_number++ - 6),object_name,'','','','',layout]);
+        });
+    });
+    log.info('page_layout is created successfully');
+    return fs.writeFileAsync(config.output_directory + config.output_file.page_layout,spread_page_layout.generate());
+}
+
 function set_header(spreadsheet, documentname, document_target){
     spreadsheet.set_row('base',1,
         ['システム名','','','','','','','','','ドキュメント名','','','','','','','','',    
@@ -289,16 +249,16 @@ function set_header(spreadsheet, documentname, document_target){
 }
 
 function set_summary_header(spreadsheet, documentname, document_target){
-    spreadsheet.set_row('summary',1,
+    spreadsheet.set_row('base',1,
         ['システム名','','','','','','ドキュメント名','','','','','',
             'ドキュメント対象','','','','','','作成日','','','最終更新日']);
-    spreadsheet.set_row('summary',2,
+    spreadsheet.set_row('base',2,
         ['システム名','','','','','','ドキュメント名','','','','','',
             'ドキュメント対象','','','','','','作成者','','','最終更新者']);
-    spreadsheet.set_row('summary',3,
+    spreadsheet.set_row('base',3,
         [config.system_name,'','','','','',documentname,'','','','','',
             document_target,'','','','','',moment().format("YYYY/MM/DD"),'','','']);        
-    spreadsheet.set_row('summary',4,
+    spreadsheet.set_row('base',4,
         [config.system_name,'','','','','',documentname,'','','','','',
             document_target,'','','','','',config.created_by,'','','']);
 }
