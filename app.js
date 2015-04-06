@@ -55,11 +55,24 @@ Promise.all([
 
 function build_page_layout(){
     var documentname = config.output_file.page_layout.replace('.xlsx','');
+    set_summary_header(spread_page_layout, documentname, '-');
+    spread_page_layout.set_row('summary',6,['','No','オブジェクト名','','','','','レイアウト名','','','','','備考']);
+    var row_number = 7;
+    _.each(Object.keys(spec.page_layout_list()), function(object_name){
+        console.log('----------');
+        console.log(object_name);
+        var layouts = spec.page_layout_list()[object_name];
+        _.each(layouts, function(layout){
+            console.log('-+-+-+-+-+-+-+-+');
+            console.log(layout);
+            spread_page_layout.set_row('summary',row_number,['',(row_number++ - 6),object_name,'','','','',layout]);
+        });
+    });
     set_header(spread_page_layout, documentname, '-');
     spread_page_layout.bulk_copy_sheet('base', spec.object_names);
     _.each(spec.object_names, function(obj_name){
         var obj = spec.page_layouts()[obj_name];
-        var row_number = 7;
+        row_number = 7;
         _.each(Object.keys(obj), function(field_name){
             var field = obj[field_name];
             var insert_row0 = ['', '項目名', '','','','','','型',''];
@@ -68,7 +81,7 @@ function build_page_layout(){
             spread_page_layout.set_row(obj_name,3,insert_row0.concat(layouts));
             spread_page_layout.set_row(obj_name,3,
                 [config.system_name,'','','','','','','','',documentname,'','','','','','','','',
-                    spec.label_name(obj_name) + '(' + obj_name + ')','','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
+                    obj_name,'','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
 
             spread_page_layout.set_row(obj_name,6,insert_row0.concat(layouts));
             
@@ -193,7 +206,7 @@ function build_custom_field(){
         var row_number = 7;
         spread_custom_field.set_row(obj_name,3,
             [config.system_name,'','','','','','','','',documentname,'','','','','','','','',
-                spec.label_name(obj_name)+'('+obj_name+')','','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
+               obj_name,'','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
 
         var custom_fields = all_custom_fields[obj_name];
         _.each(custom_fields, function(field){
@@ -217,7 +230,7 @@ function build_field_permission(){
     _.each(spec.object_names, function(sheetname){
         spread_field_permission.set_row(sheetname,3,
             [config.system_name,'','','','','','','','',documentname,'','','','','','','','',
-                spec.label_name(sheetname)+'('+sheetname+')','','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
+                sheetname,'','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
 
         var profiles = spec.valid_profile();
         var field_permissions = spec.field_permission();
@@ -273,6 +286,20 @@ function set_header(spreadsheet, documentname, document_target){
          document_target,'','','','','','','','',config.created_by,'','','','']);
 }
 
+function set_summary_header(spreadsheet, documentname, document_target){
+    spreadsheet.set_row('summary',1,
+        ['システム名','','','','','','ドキュメント名','','','','','',
+            'ドキュメント対象','','','','','','作成日','','','最終更新日']);
+    spreadsheet.set_row('summary',2,
+        ['システム名','','','','','','ドキュメント名','','','','','',
+            'ドキュメント対象','','','','','','作成者','','','最終更新者']);
+    spreadsheet.set_row('summary',3,
+        [config.system_name,'','','','','',documentname,'','','','','',
+            document_target,'','','','','',moment().format("YYYY/MM/DD"),'','','']);        
+    spreadsheet.set_row('summary',4,
+        [config.system_name,'','','','','',documentname,'','','','','',
+            document_target,'','','','','',config.created_by,'','','']);
+}
 function load_config(){
     var config = yaml.safeLoad(fs.readFileSync('./yaml/config.yml', 'utf8'));
     return config;
