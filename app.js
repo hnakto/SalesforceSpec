@@ -201,6 +201,8 @@ function build_custom_field(){
         ['','No','表示ラベル','','','','API参照名','','','','型','','数式/選択リスト値','','','',
          '初期値','','','必須','ユニーク','外部','履歴','トレンド','説明']);
     spread_custom_field.bulk_copy_sheet('base', spec.object_names);
+    spread_custom_field.delete_sheet('base');
+    spread_custom_field.active_sheet(spec.object_names[0]);
     var all_custom_fields = spec.custom_field();
     _.each(spec.object_names, function(obj_name){
         var row_number = 7;
@@ -218,7 +220,6 @@ function build_custom_field(){
             );
         });
     });
-    spread_custom_field.active_sheet('base');
     return fs.writeFileAsync(config.output_directory + config.output_file.custom_field, spread_custom_field.generate());
 }
 
