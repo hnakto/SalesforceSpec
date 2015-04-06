@@ -24,6 +24,7 @@ var spec = new SalesforceSpec();
 var config = load_config();
 
 var spread_custom_field = new SpreadSheet(config.template_directory + config.template_file.custom_field);
+var spread_custom_object = new SpreadSheet(config.template_directory + config.template_file.custom_object);
 var spread_validation_rule = new SpreadSheet(config.template_directory + config.template_file.validation);
 var spread_crud = new SpreadSheet(config.template_directory + config.template_file.object_permission);
 var spread_field_permission = new SpreadSheet(config.template_directory + config.template_file.field_permission);
@@ -33,19 +34,22 @@ var spread_page_layout = new SpreadSheet(config.template_directory + config.temp
 Promise.all([
     spec.initialize(),
     spread_custom_field.initialize(),
+    spread_custom_object.initialize(),
     spread_validation_rule.initialize(),
     spread_crud.initialize(),
     spread_field_permission.initialize(),
     spread_workflow.initialize(),
     spread_page_layout.initialize()
 ]).then(function() {
+    spec.custom_object_summary();
     return Promise.all([
         build_page_layout(),
         build_validation(),
         build_workflow(),
         build_field_permission(),
         build_object_permission(),
-        build_custom_field()
+        build_custom_field(),
+        build_custom_object()
     ]);
 }).then(function(){
     log.info('successfully finished.');
@@ -231,6 +235,18 @@ function build_page_layout(){
     });
     log.info('page_layout is created successfully');
     return fs.writeFileAsync(config.output_directory + config.output_file.page_layout,spread_page_layout.generate());
+}
+
+function build_custom_object(){
+    var documentname = config.output_file.custom_object.replace('.xlsx','');
+    set_summary_header(spread_custom_object, documentname, '-');
+    spread_custom_object.set_row('base',6,['','No','ラベル名','','','','API参照名','','','','説明']);
+    var row_number = 7;
+    _.each(spec.custom_object_summary(), function(obj){
+        spread_custom_object.set_row('base',row_number,['',(row_number++ - 6),obj.label,'','','',obj.fullName,'','','',obj.description]);
+    });
+    log.info('custom_object is created successfully');
+    return fs.writeFileAsync(config.output_directory + config.output_file.custom_object, spread_custom_object.generate());
 }
 
 function set_header(spreadsheet, documentname, document_target){
