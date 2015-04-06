@@ -102,6 +102,7 @@ function build_page_layout(){
             spread_page_layout.set_row(obj_name,row_number++,insert_row2);
         });
     });
+    spread_page_layout.active_sheet('base');
     log.info('page_layout is created successfully');
     return fs.writeFileAsync(config.output_directory + config.output_file.page_layout,spread_page_layout.generate());
 }
@@ -140,6 +141,7 @@ function build_object_permission(){
         spread_crud.set_row('base',i*6+11,permission_all_r,mark);
         spread_crud.set_row('base',i*6+12,permission_all_u,mark);
     }
+    spread_crud.active_sheet('base');
     log.info('object_permission is created successfully');
     return fs.writeFileAsync(config.output_directory + config.output_file.object_permission, spread_crud.generate());
 }
@@ -163,6 +165,7 @@ function build_workflow(){
             );
         });
     });
+    spread_workflow.active_sheet('base');
     log.info('workflow is created successfully');
     return fs.writeFileAsync(config.output_directory + config.output_file.workflow,spread_workflow.generate());
 }
@@ -187,6 +190,7 @@ function build_validation(){
             );
         });
     });
+    spread_validation_rule.active_sheet('base');
     return fs.writeFileAsync(config.output_directory + config.output_file.validation,spread_validation_rule.generate());
 }
 
@@ -214,6 +218,7 @@ function build_custom_field(){
             );
         });
     });
+    spread_custom_field.active_sheet('base');
     return fs.writeFileAsync(config.output_directory + config.output_file.custom_field, spread_custom_field.generate());
 }
 
@@ -264,6 +269,7 @@ function build_field_permission(){
             spread_field_permission.set_row(sheetname, row_number++, row_entry_readonly,{'●': index_on_mark});
         });
     });
+    spread_field_permission.active_sheet('base');
     return fs.writeFileAsync(config.output_directory + config.output_file.field_permission,spread_field_permission.generate());
 }
 
