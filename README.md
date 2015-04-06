@@ -35,6 +35,16 @@ SALESFORCE_HOST=hostname of target organization. e.g. ap.salesforce.com
 SALESFORCE_VERSION=salesforce version of target organization. e.g. 33.0
 ```
 
- 
+### Run app
+
+```bash
+node app.js
+```
+
+### Note
+* yaml/config.ymlを編集することにより、アプリケーションの設定値が変更可能。<br/>
+詳細は https://github.com/hagasatoshi/SalesforceSpec/tree/master/yaml を参照。
+* 帳票の仕様については https://github.com/hagasatoshi/SalesforceSpec/tree/master/template を参照。
+
 
 
