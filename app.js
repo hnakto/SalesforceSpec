@@ -59,12 +59,8 @@ function build_page_layout(){
     spread_page_layout.set_row('summary',6,['','No','オブジェクト名','','','','','レイアウト名','','','','','備考']);
     var row_number = 7;
     _.each(Object.keys(spec.page_layout_list()), function(object_name){
-        console.log('----------');
-        console.log(object_name);
         var layouts = spec.page_layout_list()[object_name];
         _.each(layouts, function(layout){
-            console.log('-+-+-+-+-+-+-+-+');
-            console.log(layout);
             spread_page_layout.set_row('summary',row_number,['',(row_number++ - 6),object_name,'','','','',layout]);
         });
     });
