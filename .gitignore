@@ -6,3 +6,4 @@ temp
 output/*.xlsx
 work/*
 package.xml
+.DS_Store
