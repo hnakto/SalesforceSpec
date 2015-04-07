@@ -7,3 +7,7 @@ output/*.xlsx
 work/*
 package.xml
 .DS_Store
+lib/.DS_Store
+output/.DS_Store
+template/.DS_Store
+yaml/.DS_Store
