@@ -1,6 +1,5 @@
-system_name: ライツ契約管理システム
-created_by: 株式会社パソナテキーラ
-temporary_directory: temp
+system_name: サンプル会社案件管理システム
+created_by: 株式会社サンプル
 
 template_directory: ./template/
 template_file:
@@ -30,3 +29,4 @@ target_profile:
 target_standard_object:
   - Account
   - Contact
+  - Opportunity

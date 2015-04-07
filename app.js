@@ -41,7 +41,6 @@ Promise.all([
     spread_workflow.initialize(),
     spread_page_layout.initialize()
 ]).then(function() {
-    spec.custom_object_summary();
     return Promise.all([
         build_page_layout(),
         build_validation(),
@@ -67,7 +66,7 @@ function build_object_permission(){
     var object_permission = spec.object_permission();
     for(var i = 0; i<spec.object_names.length; i++){
         var obj_apiname = spec.object_names[i];
-        var objname = spec.label_name(obj_apiname);
+        var objname = spec.object_label()[obj_apiname];
         var permission_c = ['',objname,'','',obj_apiname,'','','作成'];
         var permission_r = ['',objname,'','',obj_apiname,'','','読み取り'];
         var permission_u = ['',objname,'','',obj_apiname,'','','更新'];
@@ -155,7 +154,7 @@ function build_custom_field(){
         var row_number = 7;
         spread_custom_field.set_row(obj_name,3,
             [config.system_name,'','','','','','','','',documentname,'','','','','','','','',
-               obj_name,'','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
+                    spec.object_label()[obj_name]+'('+obj_name+')','','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
 
         var custom_fields = all_custom_fields[obj_name];
         _.each(custom_fields, function(field){
@@ -181,7 +180,7 @@ function build_field_permission(){
     _.each(spec.object_names, function(sheetname){
         spread_field_permission.set_row(sheetname,3,
             [config.system_name,'','','','','','','','',documentname,'','','','','','','','',
-                sheetname,'','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
+                spec.object_label()[sheetname]+'('+sheetname+')','','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
 
         var profiles = spec.valid_profile();
         var field_permissions = spec.field_permission();
@@ -248,7 +247,7 @@ function build_page_layout(){
             spread_page_layout.set_row(obj_name,3,insert_row0.concat(layouts));
             spread_page_layout.set_row(obj_name,3,
                 [config.system_name,'','','','','','','','',documentname,'','','','','','','','',
-                    obj_name,'','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
+                    spec.object_label()[obj_name]+'('+obj_name+')','','','','','','','','',moment().format("YYYY/MM/DD"),'','','','']);
 
             spread_page_layout.set_row(obj_name,6,insert_row0.concat(layouts));
 
