@@ -1,50 +1,46 @@
 SalesforceSpec
 ============
-Metadata APIで取得した組織情報を、Excelファイルに出力する。
+Batch script that creates the followings specification files of your salesforce organization.
+* Custom Objects
+* Object Permissions
+* Custom Fields
+* Field Level Securities
+* Page Layouts
+* Workflow Rules
+* Validation Rules
 
-####対応帳票
-* カスタムオブジェクト一覧
-* オブジェクト権限一覧
-* カスタム項目一覧
-* 項目レベル権限一覧
-* レイアウト一覧
-* ワークフロー一覧
-* 入力規則一覧
 
-Usage
-------------
+### 1.git clone
 
-### npm install
-
-```bash
-npm install
+```
+git clone git@github.com:hagasatoshi/SalesforceSpec.git
+cd SalesforceSpec
 ```
 
-### Salesforce Credentials
+### 2.create credential file
 
-```bash
+```
 touch .env
 ```
 
-.envにSalesforceのCredentialを記載
+write information to .env as follows.
 
 ```bash
-SALESFORCE_USERNAME=your salesforce user name
-SALESFORCE_PASSWORD=your salesforce password + security token(if required)
-SALESFORCE_HOST=hostname of target organization. e.g. ap.salesforce.com
-SALESFORCE_VERSION=salesforce version of target organization. e.g. 33.0
+SALESFORCE_USERNAME= user name of your salesforce organization
+SALESFORCE_PASSWORD= password of your salesforce organization. Please append security token if required
+SALESFORCE_HOST= hostname of your salesforce organization, for example ap.salesforce.com
+SALESFORCE_VERSION= version of your salesforce organization
 ```
 
-### Run app
+### 3.run app
 
 ```bash
 node app.js
 ```
 
-### Note
-* yaml/config.ymlを編集することにより、アプリケーションの設定値が変更可能。<br/>
-詳細は https://github.com/hagasatoshi/SalesforceSpec/tree/master/yaml を参照。
-* 帳票の仕様については https://github.com/hagasatoshi/SalesforceSpec/tree/master/template を参照。
+### note
+* you can change configuration of application by editing yaml/config.yml <br/>
+Please check the page https://github.com/hagasatoshi/SalesforceSpec/tree/master/yaml for detail.
 
 
 
